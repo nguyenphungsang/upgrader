@@ -92,6 +92,8 @@ rm -f ${UPGRADER_UNUSED}
 if `check_tmp_noexec $BINDIR`;
 then
    # Get an executable temp directory and move the UPGRADER binary into
+   # that directory.  Pass the directory to the upgrader; the '-d' option
+   # directs the binary to delete itself after starting execution.
    newdir=`create_executable_temp_dir`
    mv $BINDIR/$UPGRADER $newdir/$UPGRADER
    UPGRADERARGS="$UPGRADERARGS -t $newdir"
