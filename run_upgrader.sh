@@ -15,7 +15,9 @@ UPGRADER32='vmware-tools-upgrader-32'
 ARGS="$@"
 
 # Setup the logfile in a spot that avoids SElinux errors and allows for
-
+# better debugging of upgrader errors.  Add the date as the first line
+# so we can get a better handle on the situation.  This also effectively
+# deletes any previous log file that may have been there.
 date >$LOGFILE
 chmod 0600 $LOGFILE
 
