@@ -103,6 +103,9 @@ fi
 UPGRADER=$BINDIR/$UPGRADER
 
 # Complete argument list based on whether Tools is
+# already installed or not. If user passes args, though,
+# use them blindly.
+# (-s checks to see if a file exists and has nonzero length.)
 
 if [ ! -s "$DBPATH" ] && [ "x$ARGS" = "x" ];
 then
