@@ -15,7 +15,9 @@ UPGRADER32='vmware-tools-upgrader-32'
 ARGS="$@"
 
 # Setup the logfile in a spot that avoids SElinux errors and allows for
-
+# better debugging of upgrader errors.  Add the date as the first line
+# so we can get a better handle on the situation.  This also effectively
+# deletes any previous log file that may have been there.
 date >$LOGFILE
 chmod 0600 $LOGFILE
 
@@ -67,6 +69,12 @@ function create_executable_temp_dir {
    echo `mktemp -d -p $libdir vmware-tools-temp-XXXXXX`
 }
 
+# Close all the inherited FDs. See bug 138500 for details.
+MAXFD=$(expr `ulimit -n` - 1)
+for fd in `seq 3 $MAXFD`; do
+   eval "exec $fd>&-"
+done
+
 # Check userland bitness.  Remove the unneeded upgrader binary.
 which file >& /dev/null
 if [ $? -ne 0 ];then
@@ -85,11 +93,16 @@ echo "Deleting the unneeded upgrader binary: ${UPGRADER_UNUSED}" \
      >>$LOGFILE 2>&1
 rm -f ${UPGRADER_UNUSED}
 
+# Pass a '-d' option to the upgrader to direct the binary to delete itself
+# after starting execution.
+UPGRADERARGS="-d"
 
 # Check if the executable is currently in a 'noexec' $BINDIR.
 if `check_tmp_noexec $BINDIR`;
 then
    # Get an executable temp directory and move the UPGRADER binary into
+   # that directory.  Pass the directory to the upgrader; the '-d' option
+   # directs the binary to delete itself after starting execution.
    newdir=`create_executable_temp_dir`
    mv $BINDIR/$UPGRADER $newdir/$UPGRADER
    UPGRADERARGS="$UPGRADERARGS -t $newdir"
@@ -101,6 +114,9 @@ fi
 UPGRADER=$BINDIR/$UPGRADER
 
 # Complete argument list based on whether Tools is
+# already installed or not. If user passes args, though,
+# use them blindly.
+# (-s checks to see if a file exists and has nonzero length.)
 
 if [ ! -s "$DBPATH" ] && [ "x$ARGS" = "x" ];
 then
